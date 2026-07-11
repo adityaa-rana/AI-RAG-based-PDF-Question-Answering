@@ -14,14 +14,15 @@ def create_vector_store(chunks: list[dict]) -> None:
 
     create_directory(settings.VECTOR_STORE_DIR)
 
-    embeddings = np.array(
+    embeddings =     np.array(
         [chunk["embedding"] for chunk in chunks],
         dtype="float32"
     )
+    faiss.normalize_L2(embeddings)
 
     dimension = embeddings.shape[1]
 
-    index = faiss.IndexFlatL2(dimension)
+    index = faiss.IndexFlatIP(dimension)
 
     index.add(embeddings)
 
@@ -73,9 +74,9 @@ def search_vector_store(
     Search the vector store.
     """
 
-    distances, indices = index.search(
+    similarities, indices = index.search(
         np.array([query_embedding], dtype="float32"),
         top_k
     )
 
-    return distances, indices
+    return similarities, indices

@@ -14,6 +14,11 @@ function Home() {
     const [loading, setLoading] = useState(false);
 
     const [messages, setMessages] = useState([]);
+    function clearChat() {
+
+        setMessages([]);
+
+    }
 
     return (
 
@@ -35,6 +40,7 @@ function Home() {
                 <ChatBox
                     messages={messages}
                     loading={loading}
+                    clearChat={clearChat}
                 />
 
                 <ChatInput

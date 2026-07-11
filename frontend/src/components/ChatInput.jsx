@@ -50,12 +50,14 @@ function ChatInput({
             setLoading(true);
 
             const response = await askQuestion(currentQuestion);
-
+            console.log(response);
             const assistantMessage = {
 
                 role: "assistant",
 
-                text: response.answer
+                text: response.answer,
+
+                confidence: response.confidence
 
             };
 

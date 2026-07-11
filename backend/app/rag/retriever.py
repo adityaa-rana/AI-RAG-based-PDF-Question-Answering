@@ -1,5 +1,6 @@
 from app.core.resources import embedding_model
-
+import faiss
+import numpy as np
 from app.core.config import settings
 from app.rag.vector_store import (
     load_vector_store,
@@ -24,16 +25,22 @@ def retrieve_relevant_chunks(
     """
 
     # Generate question embedding
-    query_embedding = embedding_model.encode(
-        question,
-        convert_to_numpy=True
+    query_embedding = resources.embedding_model.encode(question)
+
+    query_embedding = np.array(
+        query_embedding,
+        dtype="float32"
+    )
+
+    faiss.normalize_L2(
+        query_embedding.reshape(1, -1)
     )
 
     # Load FAISS index and metadata
     index, metadata = load_vector_store()
 
     # Search the vector database
-    _, indices = search_vector_store(
+    similarities, indices = search_vector_store(
         resources.faiss_index,
         query_embedding,
         top_k
@@ -42,11 +49,24 @@ def retrieve_relevant_chunks(
     # Retrieve matching chunks
     retrieved_chunks = []
 
-    for index in indices[0]:
+    for similarity, idx in zip(
+        similarities[0],
+        indices[0]
+    ):
 
-        for index in indices[0]:
-            retrieved_chunks.append(
-                resources.metadata[index]
-            )
+        chunk = resources.metadata[idx].copy()
 
-    return retrieved_chunks
+        chunk["confidence"] = round(
+            float(similarity) * 100,
+            2
+        )
+
+        retrieved_chunks.append(chunk)
+
+    return {
+
+    "chunks": retrieved_chunks,
+
+    "confidence": retrieved_chunks[0]["confidence"]
+
+}

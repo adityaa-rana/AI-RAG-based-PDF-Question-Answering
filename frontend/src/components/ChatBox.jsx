@@ -3,7 +3,17 @@ import { useEffect, useRef } from "react";
 import Message from "./Message";
 import Loader from "./Loader";
 
-function ChatBox({ messages, loading }) {
+import { FiTrash2 } from "react-icons/fi";
+
+function ChatBox({
+
+    messages,
+
+    loading,
+
+    clearChat
+
+}) {
 
     const bottomRef = useRef(null);
 
@@ -20,6 +30,30 @@ function ChatBox({ messages, loading }) {
         <section
             className="bg-white rounded-2xl shadow-lg border border-slate-200 p-10 mb-8 h-[500px] overflow-y-auto"
         >
+
+            {
+                messages.length > 0 && (
+
+                    <div className="flex justify-end mb-6">
+
+                        <button
+
+                            onClick={clearChat}
+
+                            className="flex items-center gap-2 text-red-500 hover:text-red-600 font-semibold transition"
+
+                        >
+
+                            <FiTrash2 size={18} />
+
+                            Clear Chat
+
+                        </button>
+
+                    </div>
+
+                )
+            }
 
             {
                 messages.length === 0 ? (
@@ -47,6 +81,7 @@ function ChatBox({ messages, loading }) {
                 ) : (
 
                     <>
+
                         {
                             messages.map((message, index) => (
 
@@ -54,6 +89,7 @@ function ChatBox({ messages, loading }) {
                                     key={index}
                                     role={message.role}
                                     text={message.text}
+                                    confidence={message.confidence}
                                 />
 
                             ))

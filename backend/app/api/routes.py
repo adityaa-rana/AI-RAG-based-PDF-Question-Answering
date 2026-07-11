@@ -75,17 +75,21 @@ async def ask_question(request: AskRequest):
             detail="Please upload a PDF first."
         )
 
-    retrieved_chunks = retrieve_relevant_chunks(
-        request.question
-    )
+    retrieval_result = retrieve_relevant_chunks(
+    request.question
+)
 
     prompt = build_prompt(
         request.question,
-        retrieved_chunks
+        retrieval_result["chunks"]
     )
 
     answer = generate_answer(prompt)
 
     return AskResponse(
-        answer=answer
-    )
+
+    answer=answer,
+
+    confidence=round(retrieval_result["confidence"],2)
+
+)
