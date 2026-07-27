@@ -93,6 +93,12 @@ This project addresses these limitations by implementing a **Retrieval-Augmented
 
 <img width="1178" height="1017" alt="Screenshot 2026-07-12 012619" src="https://github.com/user-attachments/assets/5e732223-0694-40ca-b488-8c20e79aa479" />
 
+<img width="878" height="891" alt="Screenshot 2026-07-28 012753" src="https://github.com/user-attachments/assets/ae343e31-1b22-40e6-9f15-e2b642b9b747" />
+
+<img width="813" height="833" alt="Screenshot 2026-07-28 012735" src="https://github.com/user-attachments/assets/64214c35-5ad0-4db1-8572-08563d3ec3fe" />
+
+
+
 
 - Home Page
 - Upload PDF
