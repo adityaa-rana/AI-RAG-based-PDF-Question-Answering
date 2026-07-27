@@ -7,7 +7,11 @@ function Message({
 
     text,
 
-    confidence
+    confidence,
+
+    youtube = [],
+
+    web = []
 
 }) {
 
@@ -125,6 +129,92 @@ function Message({
                             {confidence.toFixed(1)}%
 
                         </span>
+
+                    </div>
+
+                )
+            }
+            {
+                !isUser && youtube.length > 0 && (
+
+                    <div className="ml-13 mt-6">
+
+                        <h4 className="font-semibold text-slate-800 mb-3">
+                            📺 Related YouTube Videos
+                        </h4>
+
+                        <div className="space-y-3">
+
+                            {
+                                youtube.map((video, index) => (
+
+                                    <a
+                                        key={index}
+                                        href={video.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="block p-3 rounded-lg border border-slate-200 hover:border-blue-500 hover:bg-slate-50 transition"
+                                    >
+
+                                        <p className="font-medium text-slate-800">
+                                            {video.title}
+                                        </p>
+
+                                        <p className="text-sm text-slate-500 mt-1">
+                                            {video.channel}
+                                            {" • "}
+                                            {video.duration}
+                                        </p>
+
+                                    </a>
+
+                                ))
+                            }
+
+                        </div>
+
+                    </div>
+
+                )
+            }
+
+
+            {
+                !isUser && web.length > 0 && (
+
+                    <div className="ml-13 mt-8">
+
+                        <h4 className="font-semibold text-slate-800 mb-3">
+                            🌐 Related Web Resources
+                        </h4>
+
+                        <div className="space-y-3">
+
+                            {
+                                web.map((resource, index) => (
+
+                                    <a
+                                        key={index}
+                                        href={resource.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="block p-3 rounded-lg border border-slate-200 hover:border-blue-500 hover:bg-slate-50 transition"
+                                    >
+
+                                        <p className="font-medium text-slate-800">
+                                            {resource.title}
+                                        </p>
+
+                                        <p className="text-sm text-slate-600 mt-1 line-clamp-2">
+                                            {resource.content}
+                                        </p>
+
+                                    </a>
+
+                                ))
+                            }
+
+                        </div>
 
                     </div>
 

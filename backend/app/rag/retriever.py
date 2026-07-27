@@ -1,72 +1,63 @@
-from app.core.resources import embedding_model
-import faiss
-import numpy as np
-from app.core.config import settings
-from app.rag.vector_store import (
-    load_vector_store,
-    search_vector_store
-)
+from app.rag.vector_store import get_vector_store
 
-from app.core import resources
+
+def retrieve_documents(
+    question: str,
+    top_k: int = 3
+):
+    """
+    Retrieve LangChain Document objects.
+
+    This function will be used by chain.py.
+    """
+
+    vector_store = get_vector_store()
+
+    return vector_store.similarity_search_with_score(
+        question,
+        k=top_k
+    )
+
 
 def retrieve_relevant_chunks(
     question: str,
     top_k: int = 3
-) -> list[dict]:
+):
     """
-    Retrieve the most relevant chunks for a question.
+    Retrieve the most relevant chunks along with confidence.
 
-    Args:
-        question (str): User's question.
-        top_k (int): Number of chunks to retrieve.
-
-    Returns:
-        list[dict]
+    This function is used by the API/frontend.
     """
 
-    # Generate question embedding
-    query_embedding = resources.embedding_model.encode(question)
+    vector_store = get_vector_store()
 
-    query_embedding = np.array(
-        query_embedding,
-        dtype="float32"
+    results = vector_store.similarity_search_with_score(
+        query=question,
+        k=top_k
     )
 
-    faiss.normalize_L2(
-        query_embedding.reshape(1, -1)
-    )
-
-    # Load FAISS index and metadata
-    index, metadata = load_vector_store()
-
-    # Search the vector database
-    similarities, indices = search_vector_store(
-        resources.faiss_index,
-        query_embedding,
-        top_k
-    )
-
-    # Retrieve matching chunks
     retrieved_chunks = []
 
-    for similarity, idx in zip(
-        similarities[0],
-        indices[0]
-    ):
+    confidence = 0
 
-        chunk = resources.metadata[idx].copy()
+    for document, score in results:
 
-        chunk["confidence"] = round(
-            float(similarity) * 100,
-            2
+        similarity = max(0, min(1, 1 - score))
+
+        confidence_score = round(similarity * 100, 2)
+
+        if confidence_score > confidence:
+            confidence = confidence_score
+
+        retrieved_chunks.append(
+            {
+                "page": document.metadata["page"] + 1,
+                "text": document.page_content,
+                "confidence": confidence_score
+            }
         )
 
-        retrieved_chunks.append(chunk)
-
     return {
-
-    "chunks": retrieved_chunks,
-
-    "confidence": retrieved_chunks[0]["confidence"]
-
-}
+        "chunks": retrieved_chunks,
+        "confidence": confidence
+    } 

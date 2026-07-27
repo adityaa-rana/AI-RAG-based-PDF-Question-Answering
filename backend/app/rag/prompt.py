@@ -1,64 +1,49 @@
-def build_prompt(
-    question: str,
-    retrieved_chunks: list[dict]
-) -> str:
-    """
-    Build the prompt for Gemini.
+from langchain_core.prompts import ChatPromptTemplate
 
-    Args:
-        question (str): User question.
-        retrieved_chunks (list[dict]): Retrieved chunks.
 
-    Returns:
-        str: Prompt for Gemini.
-    """
+prompt_template = ChatPromptTemplate.from_template("""
+You are an expert AI assistant.
 
-    context = ""
+Use the previous conversation history to understand follow-up questions and pronouns like "it", "they", "this", etc.
 
-    for chunk in retrieved_chunks:
+Answer the user's question ONLY using the provided context.
 
-        context += (
-            f"Page {chunk['page']}\n"
-            f"{chunk['text']}\n\n"
-        )
+If the answer is not present in the context, reply that the information is not available in the uploaded PDF.
 
-    prompt = f"""
-You are an expert AI assistant for question answering over PDF documents.
+Conversation History:
+{chat_history}
 
-Your task is to answer the user's question ONLY using the provided document context.
+----------------------------------------
 
-Instructions:
-
-1. Use ONLY the information present in the context.
-2. Do NOT use your own knowledge.
-3. Do NOT guess or hallucinate.
-4. If the answer is not available in the context, reply exactly:
-   "I couldn't find the answer in the uploaded PDF."
-5. Write the answer in clear, concise English.
-6. Use bullet points whenever appropriate.
-7. If the answer is spread across multiple pages, combine the information naturally.
-8. At the end of the answer, mention the page number(s) used in the following format:
-
-Sources:
-Page X
-or
-Pages X, Y, Z
-
-----------------------------
-DOCUMENT CONTEXT
-----------------------------
-
+Context:
 {context}
 
-----------------------------
-USER QUESTION
-----------------------------
+----------------------------------------
 
+Question:
 {question}
 
-----------------------------
-ANSWER
-----------------------------
-"""
+Return ONLY a valid JSON object in the following format:
 
-    return prompt
+{{
+    "answer": "Detailed answer to the user's question.",
+    "youtube_query": "Short YouTube search query",
+    "web_query": "Short web search query"
+}}
+
+Rules:
+
+- Use the conversation history only to understand the current question.
+- Use ONLY the provided context to generate the answer.
+- If the context does not contain the answer, say the information is not available in the uploaded PDF.
+- The answer should be detailed.
+- The YouTube query should contain only the main topic.
+- The Web query should contain only the main topic.
+- Do NOT add markdown.
+- Do NOT wrap the JSON inside ``` blocks.
+- Return only JSON.
+""")
+
+
+def get_prompt():
+    return prompt_template

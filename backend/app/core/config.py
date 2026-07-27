@@ -8,6 +8,9 @@ class Settings(BaseSettings):
 
     GEMINI_API_KEY: str
 
+    # Will be used later for Tavily Search
+    TAVILY_API_KEY: str = ""
+
     UPLOAD_DIR: str = "uploads"
 
     VECTOR_STORE_DIR: str = "vector_store"

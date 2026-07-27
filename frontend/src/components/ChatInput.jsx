@@ -57,7 +57,11 @@ function ChatInput({
 
                 text: response.answer,
 
-                confidence: response.confidence
+                confidence: response.confidence,
+
+                youtube: response.youtube,
+
+                web: response.web
 
             };
 

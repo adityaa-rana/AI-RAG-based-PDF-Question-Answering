@@ -48,7 +48,7 @@ function UploadBox({
 
             setUploaded(true);
 
-            alert("PDF uploaded successfully!");
+            // alert("PDF uploaded successfully!");
 
         }
 
@@ -129,7 +129,7 @@ function UploadBox({
                 <button
 
                     onClick={() => fileInputRef.current.click()}
-
+                    // disable the button when loading state  
                     disabled={loading}
 
                     className="px-8 py-3 rounded-xl bg-slate-200 hover:bg-slate-300 disabled:bg-slate-300 transition font-semibold text-lg"

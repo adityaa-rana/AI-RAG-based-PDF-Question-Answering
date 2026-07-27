@@ -90,6 +90,8 @@ function ChatBox({
                                     role={message.role}
                                     text={message.text}
                                     confidence={message.confidence}
+                                    youtube={message.youtube}
+                                    web={message.web}
                                 />
 
                             ))

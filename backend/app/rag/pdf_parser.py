@@ -1,44 +1,18 @@
-import fitz
-
 from app.utils.helpers import clean_text
 
+from langchain_community.document_loaders import PyMuPDFLoader
 
-def extract_text_from_pdf(file_path: str) -> list[dict]:
+
+def load_pdf(file_path: str):
     """
-    Extract text from a PDF page by page.
-
-    Args:
-        file_path (str): Path of the PDF.
-
-    Returns:
-        list[dict]:
-        [
-            {
-                "page": 1,
-                "text": "..."
-            }
-        ]
+    Load a PDF and clean the text of each page.
     """
 
-    document = fitz.open(file_path)
+    loader = PyMuPDFLoader(file_path)
 
-    pages = []
+    documents = loader.load()
 
-    for page_number, page in enumerate(document, start=1):
+    for document in documents:
+        document.page_content = clean_text(document.page_content)
 
-        text = page.get_text()
-
-        text = clean_text(text)
-
-        if text:
-
-            pages.append(
-                {
-                    "page": page_number,
-                    "text": text
-                }
-            )
-
-    document.close()
-
-    return pages
+    return documents

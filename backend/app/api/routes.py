@@ -3,23 +3,22 @@ from fastapi import UploadFile
 from fastapi import File
 from fastapi import HTTPException
 
-from app.models.schemas import AskRequest
-from app.models.schemas import AskResponse
+from app.models.schemas import (
+    AskRequest,
+    AskResponse,
+    Video,
+    WebResource,
+)
 
 from app.utils.helpers import save_uploaded_file
 
-from app.rag.pdf_parser import extract_text_from_pdf
-from app.rag.chunker import chunk_pages
-from app.rag.embeddings import generate_embeddings
-from app.rag.vector_store import (
-    create_vector_store,
-    load_vector_store
-)
-from app.rag.retriever import retrieve_relevant_chunks
-from app.rag.prompt import build_prompt
-from app.rag.generator import generate_answer
+from app.rag.pdf_parser import load_pdf
+from app.rag.chunker import split_documents
+from app.rag.vector_store import create_vector_store
+from app.rag.chain import ask_question
 
-from app.core import resources
+from app.agent.youtube_tool import youtube_tool
+from app.agent.web_tool import web_tool
 
 
 router = APIRouter()
@@ -37,28 +36,18 @@ async def upload_pdf(file: UploadFile = File(...)):
     # Save uploaded PDF
     file_path = save_uploaded_file(file)
 
-    # Extract text
-    pages = extract_text_from_pdf(file_path)
+    # Load PDF
+    documents = load_pdf(file_path)
 
     # Split into chunks
-    chunks = chunk_pages(pages)
+    chunks = split_documents(documents)
 
-    # Generate embeddings
-    embedded_chunks = generate_embeddings(chunks)
-
-    # Build vector database
-    create_vector_store(embedded_chunks)
-
-    # Load vector database into memory
-    index, metadata = load_vector_store()
-
-    # initialize none to value
-    resources.faiss_index = index
-    resources.metadata = metadata
+    # Create Vector Store
+    create_vector_store(chunks)
 
     return {
         "message": "PDF processed successfully.",
-        "pages": len(pages),
+        "pages": len(documents),
         "chunks": len(chunks)
     }
 
@@ -67,29 +56,39 @@ async def upload_pdf(file: UploadFile = File(...)):
     "/ask",
     response_model=AskResponse
 )
-async def ask_question(request: AskRequest):
+async def ask(request: AskRequest):
 
-    if resources.faiss_index is None:
-        raise HTTPException(
-            status_code=400,
-            detail="Please upload a PDF first."
+    try:
+
+        # Step 1: Get answer + search queries from RAG
+        rag_result = ask_question(request.question)
+
+        # Step 2: Search YouTube
+        youtube_results = youtube_tool.invoke(
+            rag_result["youtube_query"]
         )
 
-    retrieval_result = retrieve_relevant_chunks(
-    request.question
-)
+        # Step 3: Search Web
+        web_results = web_tool.invoke(
+            rag_result["web_query"]
+        )
 
-    prompt = build_prompt(
-        request.question,
-        retrieval_result["chunks"]
-    )
+        return AskResponse(
+            answer=rag_result["answer"],
+            confidence=rag_result["confidence"],
+            youtube=[
+                Video(**video)
+                for video in youtube_results
+            ],
+            web=[
+                WebResource(**resource)
+                for resource in web_results
+            ]
+        )
 
-    answer = generate_answer(prompt)
+    except Exception as e:
 
-    return AskResponse(
-
-    answer=answer,
-
-    confidence=round(retrieval_result["confidence"],2)
-
-)
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )

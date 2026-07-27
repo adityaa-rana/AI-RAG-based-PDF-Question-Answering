@@ -1,82 +1,60 @@
-import pickle
-from pathlib import Path
-
-import faiss
-import numpy as np
-
+from langchain_community.vectorstores import FAISS
+from langchain_community.vectorstores.utils import DistanceStrategy
 from app.core.config import settings
+from app.core.resources import embedding_model
 from app.utils.helpers import create_directory
 
-def create_vector_store(chunks: list[dict]) -> None:
+
+def create_vector_store(documents):
     """
     Create and save a FAISS vector store.
     """
 
     create_directory(settings.VECTOR_STORE_DIR)
 
-    embeddings =     np.array(
-        [chunk["embedding"] for chunk in chunks],
-        dtype="float32"
-    )
-    faiss.normalize_L2(embeddings)
-
-    dimension = embeddings.shape[1]
-
-    index = faiss.IndexFlatIP(dimension)
-
-    index.add(embeddings)
-
-    faiss.write_index(
-        index,
-        str(Path(settings.VECTOR_STORE_DIR) / "faiss_index.bin")
+    vector_store = FAISS.from_documents(
+        documents=documents,
+        embedding=embedding_model,
+        distance_strategy=DistanceStrategy.COSINE
     )
 
-    metadata = [
-        {
-            "page": chunk["page"],
-            "text": chunk["text"]
-        }
-        for chunk in chunks
-    ]
-
-    with open(
-        Path(settings.VECTOR_STORE_DIR) / "metadata.pkl",
-        "wb"
-    ) as file:
-
-        pickle.dump(metadata, file)
+    vector_store.save_local(settings.VECTOR_STORE_DIR)
 
 
 def load_vector_store():
     """
-    Load FAISS index and metadata.
+    Load the saved FAISS vector store.
     """
 
-    index = faiss.read_index(
-        str(Path(settings.VECTOR_STORE_DIR) / "faiss_index.bin")
+    vector_store = FAISS.load_local(
+        folder_path=settings.VECTOR_STORE_DIR,
+        embeddings=embedding_model,
+        allow_dangerous_deserialization=True
     )
 
-    with open(
-        Path(settings.VECTOR_STORE_DIR) / "metadata.pkl",
-        "rb"
-    ) as file:
+    return vector_store
 
-        metadata = pickle.load(file)
 
-    return index, metadata
-
-def search_vector_store(
-    index,
-    query_embedding,
-    top_k: int = 3
-):
+def get_vector_store():
     """
-    Search the vector store.
+    Return the loaded vector store.
     """
 
-    similarities, indices = index.search(
-        np.array([query_embedding], dtype="float32"),
-        top_k
+    return load_vector_store()
+
+
+def get_retriever(top_k: int = 3):
+    """
+    Return a LangChain retriever.
+    """
+
+    vector_store = load_vector_store()
+
+    retriever = vector_store.as_retriever(
+        search_type="similarity",
+        search_kwargs={
+            "k": top_k
+        }
     )
 
-    return similarities, indices
+    return retriever

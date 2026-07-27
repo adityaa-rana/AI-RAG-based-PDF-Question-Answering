@@ -14,6 +14,7 @@ function Home() {
     const [loading, setLoading] = useState(false);
 
     const [messages, setMessages] = useState([]);
+    
     function clearChat() {
 
         setMessages([]);

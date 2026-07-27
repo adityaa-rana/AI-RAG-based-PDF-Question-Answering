@@ -9,40 +9,17 @@ text_splitter = RecursiveCharacterTextSplitter(
 )
 
 
-def chunk_pages(pages: list[dict]) -> list[dict]:
+def split_documents(documents):
     """
-    Split extracted PDF pages into smaller chunks.
+    Split LangChain documents into smaller chunks.
 
     Args:
-        pages (list[dict]):
-        [
-            {
-                "page": 1,
-                "text": "..."
-            }
-        ]
+        documents (list[Document]): Documents returned by the PDF loader.
 
     Returns:
-        list[dict]
+        list[Document]: Split document chunks.
     """
 
-    chunks = []
+    split_docs = text_splitter.split_documents(documents)
 
-    for page in pages:
-
-        page_number = page["page"]
-
-        page_text = page["text"]
-
-        split_text = text_splitter.split_text(page_text)
-
-        for chunk in split_text:
-
-            chunks.append(
-                {
-                    "page": page_number,
-                    "text": chunk
-                }
-            )
-
-    return chunks
+    return split_docs
